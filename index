@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Who Owes Who? (60/40)</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <style>
+    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    body { margin: 0; padding: 16px; background: #f6f7fb; }
+    .card { background: white; border-radius: 16px; padding: 14px; box-shadow: 0 6px 18px rgba(0,0,0,.06); margin-bottom: 12px; }
+    h1 { font-size: 20px; margin: 0 0 6px; }
+    .sub { color: #555; font-size: 13px; margin-bottom: 6px; line-height: 1.35; }
+    label { display: block; font-size: 13px; margin: 10px 0 6px; color: #333; }
+    input, select { width: 100%; padding: 10px; border-radius: 12px; border: 1px solid #ddd; font-size: 15px; box-sizing: border-box; background: #fff; }
+    button { width: 100%; padding: 12px; border: 0; border-radius: 14px; font-size: 16px; cursor: pointer; }
+    .btn { background: #1f5eff; color: white; }
+    .btn2 { background: #111; color: white; margin-top: 8px; }
+    .btn3 { background: #0b7a2a; color: white; margin-top: 8px; }
+    .btn4 { background: #9a3e00; color: white; margin-top: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 10px 8px; border-bottom: 1px solid #eee; vertical-align: top; }
+    th { text-align: left; color: #444; font-weight: 650; }
+    .big { font-size: 18px; font-weight: 750; }
+    .muted { color: #666; }
+    .ok { color: #0b7a2a; }
+    .warn { color: #b42318; }
+    .tiny { font-size: 12px; color:#666; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .stat { border: 1px solid #eee; box-shadow: none; margin: 0; }
+    .row { display:flex; gap:10px; }
+    .row > div { flex: 1; }
+    .pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; white-space:nowrap; }
+    .z { background:#e8f3ff; color:#0a4aa6; }
+    .b { background:#fff0e8; color:#9a3e00; }
+    .h { background:#eef2ff; color:#3730a3; }  /* Household */
+    .s { background:#ecfeff; color:#155e75; }  /* Saanjh */
+    .e { background:#fdf2f8; color:#9d174d; }  /* Seher */
+    .both { background:#f0fdf4; color:#166534; } /* Both kids */
+    .smallbtns { display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:8px; }
+    .hint { margin-top:8px; }
+    .clickable { cursor:pointer; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h1>🧾 Who Owes Who? (60/40)</h1>
+  <div class="sub">🧘‍♂️ Mr Zen pays 60% • 🔥 Boss Lady pays 40%<br>
+    Featuring: 🌆 Saanjh (dusk) & 🌅 Seher (dawn). Because parenting is expensive and Excel is therapy.</div>
+  <div class="tiny muted">Data is cached locally for convenience. Use <b>Save to iCloud</b> to keep it safe even if browser data gets deleted.</div>
+</div>
+
+<div class="card" id="dash">
+  <div class="big">📊 Dashboard</div>
+
+  <div class="grid" style="margin-top:10px;">
+    <div class="card stat">
+      <div class="tiny muted">💰 Total spend (all)</div>
+      <div class="big" id="totalSpend">£0.00</div>
+      <div class="tiny muted" id="highSpendJoke"></div>
+    </div>
+    <div class="card stat">
+      <div class="tiny muted">⚖️ Verdict</div>
+      <div class="big" id="verdict">—</div>
+      <div class="tiny muted" id="verdictSub"></div>
+    </div>
+  </div>
+
+  <div class="grid" style="margin-top:10px;">
+    <div class="card stat">
+      <div class="tiny muted">🧘‍♂️ Zen actually paid</div>
+      <div class="big" id="zenPaid">£0.00</div>
+    </div>
+    <div class="card stat">
+      <div class="tiny muted">🔥 Boss actually paid</div>
+      <div class="big" id="bossPaid">£0.00</div>
+    </div>
+  </div>
+
+  <div class="grid" style="margin-top:10px;">
+    <div class="card stat">
+      <div class="tiny muted">🧘‍♂️ Zen should pay (60%)</div>
+      <div class="big" id="zenShould">£0.00</div>
+    </div>
+    <div class="card stat">
+      <div class="tiny muted">🔥 Boss should pay (40%)</div>
+      <div class="big" id="bossShould">£0.00</div>
+    </div>
+  </div>
+
+  <div class="grid" style="margin-top:10px;">
+    <div class="card stat">
+      <div class="tiny muted">🏠 Household total</div>
+      <div class="big" id="tagHousehold">£0.00</div>
+    </div>
+    <div class="card stat">
+      <div class="tiny muted">👧 Kids total (Saanjh + Seher)</div>
+      <div class="big" id="tagKids">£0.00</div>
+    </div>
+  </div>
+
+  <div class="hint tiny muted">Tip: Tap an expense row to delete it. Tap a tag pill to filter the table.</div>
+</div>
+
+<div class="card">
+  <div class="row">
+    <div>
+      <label>📅 Date</label>
+      <input id="date" type="date" />
+    </div>
+    <div>
+      <label>👤 Paid By</label>
+      <select id="paidBy">
+        <option value="Z">🧘‍♂️ Mr Zen</option>
+        <option value="B">🔥 Boss Lady</option>
+      </select>
+    </div>
+  </div>
+
+  <label>🏷️ Tag</label>
+  <select id="tag">
+    <option value="HOUSEHOLD">🏠 Household</option>
+    <option value="SAANJH">🌆 Saanjh</option>
+    <option value="SEHER">🌅 Seher</option>
+    <option value="KIDS_BOTH">👧👶 Both kids</option>
+  </select>
+
+  <label>🧾 What was it?</label>
+  <input id="desc" type="text" placeholder="Groceries, bills, school trip, ballet class…" />
+
+  <label>💸 Amount (£)</label>
+  <input id="amount" type="number" step="0.01" min="0" placeholder="e.g., 42.50" />
+
+  <button class="btn" id="addBtn">➕ Add Expense</button>
+
+  <div class="smallbtns">
+    <button class="btn3" id="saveBtn">💾 Save to iCloud (JSON)</button>
+    <button class="btn4" id="loadBtn">📂 Load from iCloud (JSON)</button>
+  </div>
+
+  <button class="btn2" id="clearBtn">🧨 Clear Month (fresh start)</button>
+</div>
+
+<div class="card">
+  <div class="big">📒 Expenses <span class="tiny muted" id="filterLabel"></span></div>
+  <div class="tiny muted">Legend: 🧘‍♂️ = Zen, 🔥 = Boss. Tap a row to delete.</div>
+  <div style="overflow:auto; margin-top:8px;">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>What</th>
+          <th>Amount</th>
+          <th>Paid</th>
+          <th>Tag</th>
+          <th>60%</th>
+          <th>40%</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = "who_owes_who_v2";
+  let expenses = [];
+  let activeTagFilter = "ALL"; // ALL | HOUSEHOLD | SAANJH | SEHER | KIDS_BOTH
+
+  const $ = (id) => document.getElementById(id);
+  const gbp = (n) => "£" + (Number(n || 0)).toFixed(2);
+
+  function tagPill(tag){
+    if(tag === "HOUSEHOLD") return '<span class="pill h clickable" data-tag="HOUSEHOLD">🏠 Household</span>';
+    if(tag === "SAANJH") return '<span class="pill s clickable" data-tag="SAANJH">🌆 Saanjh</span>';
+    if(tag === "SEHER") return '<span class="pill e clickable" data-tag="SEHER">🌅 Seher</span>';
+    if(tag === "KIDS_BOTH") return '<span class="pill both clickable" data-tag="KIDS_BOTH">👧👶 Both</span>';
+    return '<span class="pill">—</span>';
+  }
+
+  function paidPill(p){
+    return p === "Z" ? '<span class="pill z">🧘‍♂️ Z</span>' : '<span class="pill b">🔥 B</span>';
+  }
+
+  function loadLocal(){
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw) expenses = JSON.parse(raw) || [];
+    } catch { expenses = []; }
+  }
+  function saveLocal(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
+  }
+
+  function highSpendComment(total){
+    // You can tweak these thresholds whenever you like
+    if (total < 600) return "A calm month. Mr Zen approves. 🧘‍♂️";
+    if (total < 1200) return "Not bad. Slightly spicy. 🌶️";
+    if (total < 2000) return "Okay… who invited Amazon again? 📦";
+    if (total < 3000) return "We’re funding someone’s yacht at this point. 🛥️";
+    if (total < 4500) return "This month has 'London prices' written all over it. 🫠";
+    return "Emergency meeting: Mr Zen vs Boss Lady, Round 1. 🥊😂";
+  }
+
+  function filterExpenses(list){
+    if(activeTagFilter === "ALL") return list;
+    return list.filter(e => e.tag === activeTagFilter);
+  }
+
+  function recalc(){
+    const total = expenses.reduce((s,e)=> s + e.amount, 0);
+    const zenPaid = expenses.filter(e=>e.paidBy==="Z").reduce((s,e)=> s + e.amount, 0);
+    const bossPaid = expenses.filter(e=>e.paidBy==="B").reduce((s,e)=> s + e.amount, 0);
+
+    const zenShould = total * 0.6;
+    const bossShould = total * 0.4;
+    const zenNet = zenPaid - zenShould;
+
+    // Tag totals
+    const householdTotal = expenses.filter(e=>e.tag==="HOUSEHOLD").reduce((s,e)=> s + e.amount, 0);
+    const kidsTotal = expenses.filter(e=> (e.tag==="SAANJH" || e.tag==="SEHER" || e.tag==="KIDS_BOTH")).reduce((s,e)=> s + e.amount, 0);
+
+    $("totalSpend").textContent = gbp(total);
+    $("zenPaid").textContent = gbp(zenPaid);
+    $("bossPaid").textContent = gbp(bossPaid);
+    $("zenShould").textContent = gbp(zenShould);
+    $("bossShould").textContent = gbp(bossShould);
+    $("tagHousehold").textContent = gbp(householdTotal);
+    $("tagKids").textContent = gbp(kidsTotal);
+    $("highSpendJoke").textContent = total > 0 ? highSpendComment(total) : "";
+
+    // Verdict
+    const abs = Math.abs(zenNet);
+    if (total === 0) {
+      $("verdict").textContent = "—";
+      $("verdict").className = "big";
+      $("verdictSub").textContent = "Add expenses to see who owes who.";
+      return;
+    }
+
+    if (abs < 0.01) {
+      $("verdict").textContent = "✅ Even Steven";
+      $("verdict").className = "big ok";
+      $("verdictSub").textContent = "Perfect 60/40 balance. Peace achieved.";
+    } else if (zenNet < 0) {
+      $("verdict").textContent = `🧘‍♂️ Zen owes 🔥 Boss ${gbp(abs)}`;
+      $("verdict").className = "big warn";
+      $("verdictSub").textContent = "Zen: transfer it before Boss Lady invents interest charges.";
+    } else {
+      $("verdict").textContent = `🔥 Boss owes 🧘‍♂️ Zen ${gbp(abs)}`;
+      $("verdict").className = "big ok";
+      $("verdictSub").textContent = "Boss Lady: settle it and claim moral victory.";
+    }
+  }
+
+  function render(){
+    const tbody = $("rows");
+    tbody.innerHTML = "";
+
+    const list = filterExpenses(expenses);
+    $("filterLabel").textContent = activeTagFilter === "ALL" ? "(showing: all)" : `(showing: ${activeTagFilter})`;
+
+    list.forEach((e, idxInFiltered) => {
+      // Find index in original list for deletion
+      const idx = expenses.indexOf(e);
+
+      const tr = document.createElement("tr");
+      tr.style.cursor = "pointer";
+      tr.title = "Tap to delete this row";
+
+      tr.innerHTML = `
+        <td>${e.date || ""}</td>
+        <td>${(e.desc || "").replace(/</g,"&lt;")}</td>
+        <td>${gbp(e.amount)}</td>
+        <td>${paidPill(e.paidBy)}</td>
+        <td>${tagPill(e.tag)}</td>
+        <td>${gbp(e.amount * 0.6)}</td>
+        <td>${gbp(e.amount * 0.4)}</td>
+      `;
+
+      tr.addEventListener("click", (ev) => {
+        // If they clicked a tag pill, filter instead of delete
+        const pill = ev.target.closest && ev.target.closest("[data-tag]");
+        if (pill && pill.dataset && pill.dataset.tag) {
+          setFilter(pill.dataset.tag);
+          ev.stopPropagation();
+          return;
+        }
+
+        expenses.splice(idx, 1);
+        saveLocal();
+        render();
+      });
+
+      tbody.appendChild(tr);
+    });
+
+    recalc();
+  }
+
+  function setFilter(tag){
+    if (activeTagFilter === tag) activeTagFilter = "ALL";
+    else activeTagFilter = tag;
+    render();
+  }
+
+  function addExpense(){
+    const date = $("date").value;
+    const desc = $("desc").value.trim();
+    const amount = Number($("amount").value);
+    const paidBy = $("paidBy").value;
+    const tag = $("tag").value;
+
+    if (!amount || amount <= 0) {
+      alert("Give me a real amount, Mr Zen. 😄");
+      return;
+    }
+
+    expenses.unshift({ date, desc, amount, paidBy, tag });
+    saveLocal();
+
+    $("desc").value = "";
+    $("amount").value = "";
+    render();
+  }
+
+  function clearMonth(){
+    if(confirm("Clear all expenses for this month? This is the financial equivalent of a memory wipe. 🧠💥")){
+      expenses = [];
+      activeTagFilter = "ALL";
+      saveLocal();
+      render();
+    }
+  }
+
+  // ===== iCloud Save/Load (file-based) =====
+  function exportToIcloud(){
+    const payload = {
+      app: "who-owes-who",
+      version: 2,
+      exportedAt: new Date().toISOString(),
+      expenses
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+
+    const yyyy_mm = new Date().toISOString().slice(0,7);
+    a.download = `who-owes-who-${yyyy_mm}.json`;
+
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  function importFromIcloud(){
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "application/json";
+
+    input.onchange = () => {
+      const file = input.files && input.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(reader.result);
+          if (!parsed || !Array.isArray(parsed.expenses)) throw new Error("Invalid");
+
+          // Basic migration: if old data had no tag, default to HOUSEHOLD
+          expenses = parsed.expenses.map(e => ({
+            date: e.date || "",
+            desc: e.desc || "",
+            amount: Number(e.amount || 0),
+            paidBy: (e.paidBy === "B" ? "B" : "Z"),
+            tag: e.tag || "HOUSEHOLD"
+          })).filter(e => e.amount > 0);
+
+          activeTagFilter = "ALL";
+          saveLocal();
+          render();
+          alert("Loaded! 🎉 Your budget drama has been restored.");
+        } catch (err) {
+          alert("That file doesn’t look right 😬 Try picking a valid who-owes-who JSON file.");
+        }
+      };
+      reader.readAsText(file);
+    };
+
+    input.click();
+  }
+
+  // Init
+  loadLocal();
+  render();
+
+  $("addBtn").addEventListener("click", addExpense);
+  $("clearBtn").addEventListener("click", clearMonth);
+  $("saveBtn").addEventListener("click", exportToIcloud);
+  $("loadBtn").addEventListener("click", importFromIcloud);
+
+  // Default date today
+  $("date").value = new Date().toISOString().slice(0,10);
+</script>
+
+</body>
+</html>
