@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Zen & Boss Ledger (60/40)</title>
+
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0b0f19" />
+
+  <style>
+    :root{ font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color-scheme: dark; }
+    body{
+      margin:0; padding:16px;
+      background: radial-gradient(1200px 600px at 20% 0%, #182243 0%, #0b0f19 55%, #060812 100%);
+      color:#e8eefc;
+    }
+    .card{
+      background: rgba(14, 18, 33, .75);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 18px;
+      padding: 14px;
+      box-shadow: 0 10px 35px rgba(0,0,0,.45);
+      margin-bottom: 12px;
+    }
+    h1{ font-size: 20px; margin: 0 0 6px; letter-spacing: .2px;}
+    .sub{ color: rgba(232,238,252,.78); font-size: 13px; margin-bottom: 6px; line-height: 1.35; }
+    .tiny{ font-size: 12px; color: rgba(232,238,252,.68); }
+    .muted{ color: rgba(232,238,252,.68); }
+    .big{ font-size: 18px; font-weight: 800; letter-spacing: .2px; }
+    .ok{ color:#59d185; }
+    .warn{ color:#ff6b6b; }
+
+    label{ display:block; font-size: 13px; margin: 10px 0 6px; color: rgba(232,238,252,.82); }
+    input, select{
+      width: 100%;
+      padding: 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      color: #e8eefc;
+      font-size: 15px;
+      box-sizing: border-box;
+      outline: none;
+      transition: transform .12s ease, border-color .18s ease, background .18s ease;
+    }
+    input:focus, select:focus{
+      border-color: rgba(99, 179, 237, .65);
+      background: rgba(255,255,255,.08);
+      transform: translateY(-1px);
+    }
+
+    button{
+      width:100%;
+      padding: 12px;
+      border: 0;
+      border-radius: 16px;
+      font-size: 16px;
+      cursor: pointer;
+      user-select: none;
+      transition: transform .08s ease, filter .18s ease, box-shadow .18s ease;
+      box-shadow: 0 12px 22px rgba(0,0,0,.35);
+    }
+    button:active{ transform: scale(.98); }
+    .btn{ background: linear-gradient(135deg, #2b6cff, #1f5eff); color: #fff; }
+    .btn2{ background: rgba(255,255,255,.10); color:#fff; margin-top:8px; }
+    .btn3{ background: linear-gradient(135deg, #22c55e, #0b7a2a); color:#05130a; margin-top:8px; }
+    .btn4{ background: linear-gradient(135deg, #ff8a3d, #9a3e00); color:#160800; margin-top:8px; }
+
+    .smallbtns{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:8px; }
+    .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .stat{ border: 1px solid rgba(255,255,255,.08); box-shadow:none; margin:0; background: rgba(255,255,255,.04); }
+    .row{ display:flex; gap:10px; }
+    .row > div{ flex:1; }
+
+    table{ width:100%; border-collapse: collapse; font-size: 13px; }
+    th, td{ padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,.08); vertical-align: top; }
+    th{ text-align:left; color: rgba(232,238,252,.80); font-weight: 750; }
+
+    .pill{
+      display:inline-block;
+      padding:2px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      white-space: nowrap;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      color:#e8eefc;
+    }
+    .pill.clickable{ cursor:pointer; }
+    .z{ background: rgba(59,130,246,.18); color:#b8d6ff; border-color: rgba(59,130,246,.30); }
+    .b{ background: rgba(249,115,22,.18); color:#ffd2b3; border-color: rgba(249,115,22,.30); }
+    .h{ background: rgba(99,102,241,.16); color:#d2d4ff; border-color: rgba(99,102,241,.28); }
+    .s{ background: rgba(34,211,238,.16); color:#c7fbff; border-color: rgba(34,211,238,.28); }
+    .e{ background: rgba(244,114,182,.16); color:#ffd2ea; border-color: rgba(244,114,182,.28); }
+    .both{ background: rgba(34,197,94,.14); color:#ccffd9; border-color: rgba(34,197,94,.26); }
+
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%) translateY(30px);
+      background: rgba(12, 16, 28, .92);
+      color:#e8eefc;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 14px;
+      padding: 10px 12px;
+      box-shadow: 0 18px 40px rgba(0,0,0,.55);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .22s ease, transform .22s ease;
+      max-width: min(520px, calc(100vw - 24px));
+    }
+    .toast.show{ opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .flash{ animation: flashBg .9s ease; }
+    @keyframes flashBg{
+      0%{ background: rgba(99,102,241,.22); }
+      100%{ background: transparent; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h1>🌙 Zen & Boss Ledger</h1>
+  <div class="sub">🧘‍♂️ Mr Zen pays 60% • 🔥 Boss Lady pays 40% • plus the tiny CEOs: 🌆 Saanjh & 🌅 Seher.</div>
+  <div class="tiny muted">Pro tip: host on GitHub Pages, then use <b>Save to iCloud</b> + <b>Load from iCloud</b> to sync between phones.</div>
+</div>
+
+<!-- Dashboard -->
+<div class="card">
+  <div class="big">📊 Dashboard</div>
+  <div class="grid" style="margin-top:10px;">
+    <div class="card stat">
+      <div class="tiny muted">💰 Total spend</div>
+      <div class="big" id="totalSpend">£0.00</div>
+      <div class="tiny muted" id="highSpendJoke"></div>
+    </div>
+    <div class="card stat">
+      <div class="tiny muted">⚖️ Verdict</div>
+      <div class="big" id="verdict">—</div>
+      <div class="tiny muted" id="verdictSub"></div>
+    </div>
+  </div>
+
+  <div class="grid" style="margin-top:10px;">
+    <div class="card stat">
+      <div class="tiny muted">🧘‍♂️ Zen paid</div>
+      <div class="big" id="zenPaid">£0.00</div>
+    </div>
+    <div class="card stat">
+      <div class="tiny muted">🔥 Boss paid</div>
+      <div class="big" id="bossPaid">£0.00</div>
+    </div>
+  </div>
+
+  <div class="grid" style="margin-top:10px;">
+    <div class="card stat">
+      <div class="tiny muted">🏠 Household total</div>
+      <div class="big" id="tagHousehold">£0.00</div>
+    </div>
+    <div class="card stat">
+      <div class="tiny muted">👧 Kids total</div>
+      <div class="big" id="tagKids">£0.00</div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Split Calculator -->
+<div class="card">
+  <div class="big">🧮 Quick Split Calculator</div>
+  <div class="tiny muted">Type an amount. Instantly see the 60/40 split.</div>
+
+  <label>💸 Amount (£)</label>
+  <input id="splitAmount" type="number" step="0.01" min="0" placeholder="e.g., 100" />
+
+  <div class="grid" style="margin-top:10px;">
+    <div class="card stat">
+      <div class="tiny muted">🧘‍♂️ Zen 60%</div>
+      <div class="big" id="splitZen">£0.00</div>
+    </div>
+    <div class="card stat">
+      <div class="tiny muted">🔥 Boss 40%</div>
+      <div class="big" id="splitBoss">£0.00</div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Expense -->
+<div class="card">
+  <div class="row">
+    <div>
+      <label>📅 Date</label>
+      <input id="date" type="date" />
+    </div>
+    <div>
+      <label>👤 Paid By</label>
+      <select id="paidBy">
+        <option value="Z">🧘‍♂️ Mr Zen</option>
+        <option value="B">🔥 Boss Lady</option>
+      </select>
+    </div>
+  </div>
+
+  <label>🏷️ Tag</label>
+  <select id="tag">
+    <option value="HOUSEHOLD">🏠 Household</option>
+    <option value="SAANJH">🌆 Saanjh</option>
+    <option value="SEHER">🌅 Seher</option>
+    <option value="KIDS_BOTH">👧👶 Both kids</option>
+  </select>
+
+  <label>🧾 What was it?</label>
+  <input id="desc" type="text" placeholder="Groceries, bills, school trip, ballet class…" />
+
+  <label>💸 Amount (£)</label>
+  <input id="amount" type="number" step="0.01" min="0" placeholder="e.g., 42.50" />
+
+  <button class="btn" id="addBtn">➕ Add Expense</button>
+
+  <div class="smallbtns">
+    <button class="btn3" id="saveBtn">💾 Save to iCloud (JSON)</button>
+    <button class="btn4" id="loadBtn">📂 Load from iCloud (JSON)</button>
+  </div>
+
+  <div class="smallbtns">
+    <button class="btn2" id="notifBtn">🔔 Enable Notifications</button>
+    <button class="btn2" id="clearBtn">🧨 Clear Month</button>
+  </div>
+
+  <div class="tiny muted" style="margin-top:8px;">
+    Notifications: if supported, you’ll get a system notification when you add an expense. Otherwise you’ll still get an in-app toast.
+  </div>
+</div>
+
+<!-- Table -->
+<div class="card">
+  <div class="big">📒 Expenses <span class="tiny muted" id="filterLabel"></span></div>
+  <div class="tiny muted">Tap a row to delete. Tap a tag pill to filter.</div>
+
+  <div style="overflow:auto; margin-top:8px;">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>What</th>
+          <th>Amount</th>
+          <th>Paid</th>
+          <th>Tag</th>
+          <th>60%</th>
+          <th>40%</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const STORAGE_KEY = "zen_boss_ledger_v3";
+  const META_KEY = "zen_boss_ledger_meta_v1"; // last iCloud load/save info
+  let expenses = [];
+  let activeTagFilter = "ALL"; // ALL | HOUSEHOLD | SAANJH | SEHER | KIDS_BOTH
+
+  const $ = (id) => document.getElementById(id);
+  const gbp = (n) => "£" + (Number(n || 0)).toFixed(2);
+
+  function showToast(msg){
+    const t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(showToast._to);
+    showToast._to = setTimeout(()=>t.classList.remove("show"), 2200);
+  }
+
+  function loadMeta(){
+    try { return JSON.parse(localStorage.getItem(META_KEY) || "{}"); }
+    catch { return {}; }
+  }
+  function saveMeta(meta){
+    localStorage.setItem(META_KEY, JSON.stringify(meta || {}));
+  }
+
+  function tagPill(tag){
+    if(tag === "HOUSEHOLD") return '<span class="pill h clickable" data-tag="HOUSEHOLD">🏠 Household</span>';
+    if(tag === "SAANJH") return '<span class="pill s clickable" data-tag="SAANJH">🌆 Saanjh</span>';
+    if(tag === "SEHER") return '<span class="pill e clickable" data-tag="SEHER">🌅 Seher</span>';
+    if(tag === "KIDS_BOTH") return '<span class="pill both clickable" data-tag="KIDS_BOTH">👧👶 Both</span>';
+    return '<span class="pill">—</span>';
+  }
+  function paidPill(p){
+    return p === "Z" ? '<span class="pill z">🧘‍♂️ Z</span>' : '<span class="pill b">🔥 B</span>';
+  }
+
+  function loadLocal(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw) expenses = JSON.parse(raw) || [];
+    }catch{ expenses = []; }
+  }
+  function saveLocal(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
+  }
+
+  function highSpendComment(total){
+    if (total < 600) return "Calm month. Mr Zen is basically levitating. 🧘‍♂️";
+    if (total < 1200) return "Respectable. Boss Lady only mildly suspicious. 🔥";
+    if (total < 2000) return "Okay… who invited Amazon again? 📦";
+    if (total < 3000) return "We’re funding someone’s yacht at this point. 🛥️";
+    if (total < 4500) return "This month has 'London prices' tattooed on it. 🫠";
+    return "Emergency summit: Zen vs Boss Lady, Round 1. 🥊😂";
+  }
+
+  function filterExpenses(list){
+    if(activeTagFilter === "ALL") return list;
+    return list.filter(e => e.tag === activeTagFilter);
+  }
+
+  function recalc(){
+    const total = expenses.reduce((s,e)=> s + e.amount, 0);
+    const zenPaid = expenses.filter(e=>e.paidBy==="Z").reduce((s,e)=> s + e.amount, 0);
+    const bossPaid = expenses.filter(e=>e.paidBy==="B").reduce((s,e)=> s + e.amount, 0);
+
+    const zenShould = total * 0.6;
+    const zenNet = zenPaid - zenShould;
+
+    const householdTotal = expenses.filter(e=>e.tag==="HOUSEHOLD").reduce((s,e)=> s + e.amount, 0);
+    const kidsTotal = expenses.filter(e=> (e.tag==="SAANJH" || e.tag==="SEHER" || e.tag==="KIDS_BOTH")).reduce((s,e)=> s + e.amount, 0);
+
+    $("totalSpend").textContent = gbp(total);
+    $("zenPaid").textContent = gbp(zenPaid);
+    $("bossPaid").textContent = gbp(bossPaid);
+    $("tagHousehold").textContent = gbp(householdTotal);
+    $("tagKids").textContent = gbp(kidsTotal);
+    $("highSpendJoke").textContent = total > 0 ? highSpendComment(total) : "";
+
+    const abs = Math.abs(zenNet);
+    if (total === 0) {
+      $("verdict").textContent = "—";
+      $("verdict").className = "big";
+      $("verdictSub").textContent = "Add expenses to see who owes who.";
+      return;
+    }
+
+    if (abs < 0.01) {
+      $("verdict").textContent = "✅ Even Steven";
+      $("verdict").className = "big ok";
+      $("verdictSub").textContent = "Perfect 60/40 balance. Peace achieved.";
+    } else if (zenNet < 0) {
+      $("verdict").textContent = `🧘‍♂️ Zen owes 🔥 Boss ${gbp(abs)}`;
+      $("verdict").className = "big warn";
+      $("verdictSub").textContent = "Zen: transfer it before Boss Lady invents interest charges.";
+    } else {
+      $("verdict").textContent = `🔥 Boss owes 🧘‍♂️ Zen ${gbp(abs)}`;
+      $("verdict").className = "big ok";
+      $("verdictSub").textContent = "Boss Lady: settle it and claim moral victory.";
+    }
+  }
+
+  function render(){
+    const tbody = $("rows");
+    tbody.innerHTML = "";
+
+    const list = filterExpenses(expenses);
+    $("filterLabel").textContent = activeTagFilter === "ALL" ? "(showing: all)" : `(showing: ${activeTagFilter})`;
+
+    list.forEach((e) => {
+      const idx = expenses.indexOf(e);
+      const tr = document.createElement("tr");
+      tr.style.cursor = "pointer";
+      tr.title = "Tap to delete this row";
+
+      tr.innerHTML = `
+        <td>${e.date || ""}</td>
+        <td>${(e.desc || "").replace(/</g,"&lt;")}</td>
+        <td>${gbp(e.amount)}</td>
+        <td>${paidPill(e.paidBy)}</td>
+        <td>${tagPill(e.tag)}</td>
+        <td>${gbp(e.amount * 0.6)}</td>
+        <td>${gbp(e.amount * 0.4)}</td>
+      `;
+
+      tr.addEventListener("click", (ev) => {
+        const pill = ev.target.closest && ev.target.closest("[data-tag]");
+        if (pill && pill.dataset && pill.dataset.tag) {
+          setFilter(pill.dataset.tag);
+          ev.stopPropagation();
+          return;
+        }
+        expenses.splice(idx, 1);
+        saveLocal();
+        render();
+        showToast("🧽 Row deleted. Evidence disposed.");
+      });
+
+      tbody.appendChild(tr);
+    });
+
+    recalc();
+  }
+
+  function setFilter(tag){
+    activeTagFilter = (activeTagFilter === tag) ? "ALL" : tag;
+    render();
+  }
+
+  function maybeNotify(title, body){
+    showToast(body);
+    if (!("Notification" in window)) return;
+    if (Notification.permission === "granted") {
+      try { new Notification(title, { body }); } catch {}
+    }
+  }
+
+  function addExpense(){
+    const date = $("date").value;
+    const desc = $("desc").value.trim();
+    const amount = Number($("amount").value);
+    const paidBy = $("paidBy").value;
+    const tag = $("tag").value;
+
+    if (!amount || amount <= 0) {
+      showToast("😄 Enter a real amount, Mr Zen.");
+      return;
+    }
+
+    expenses.unshift({ date, desc, amount, paidBy, tag });
+    saveLocal();
+
+    $("desc").value = "";
+    $("amount").value = "";
+
+    render();
+
+    const firstRow = $("rows").querySelector("tr");
+    if(firstRow){
+      firstRow.classList.add("flash");
+      setTimeout(()=>firstRow.classList.remove("flash"), 950);
+    }
+
+    const zen = gbp(amount * 0.6);
+    const boss = gbp(amount * 0.4);
+    const who = (paidBy === "Z") ? "Zen" : "Boss Lady";
+    const tagNice = (tag === "HOUSEHOLD") ? "Household" : (tag === "SAANJH") ? "Saanjh" : (tag === "SEHER") ? "Seher" : "Both kids";
+
+    maybeNotify("New expense added", `£${amount.toFixed(2)} (${tagNice}) paid by ${who}. Split: Zen ${zen} / Boss ${boss}.`);
+  }
+
+  function exportToIcloud(){
+    const payload = {
+      app: "zen-boss-ledger",
+      version: 3,
+      exportedAt: new Date().toISOString(),
+      expenses
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+
+    const yyyy_mm = new Date().toISOString().slice(0,7);
+    a.download = `zen-boss-ledger-${yyyy_mm}.json`;
+
+    a.click();
+    URL.revokeObjectURL(a.href);
+
+    const meta = loadMeta();
+    meta.lastIcloudSaveAt = Date.now();
+    saveMeta(meta);
+
+    showToast("💾 Export started. Save it into iCloud Drive → your folder.");
+  }
+
+  function importFromIcloud(){
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "application/json";
+
+    input.onchange = () => {
+      const file = input.files && input.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(reader.result);
+          if (!parsed || !Array.isArray(parsed.expenses)) throw new Error("Invalid");
+
+          expenses = parsed.expenses.map(e => ({
+            date: e.date || "",
+            desc: e.desc || "",
+            amount: Number(e.amount || 0),
+            paidBy: (e.paidBy === "B" ? "B" : "Z"),
+            tag: e.tag || "HOUSEHOLD"
+          })).filter(e => e.amount > 0);
+
+          activeTagFilter = "ALL";
+          saveLocal();
+          render();
+
+          const meta = loadMeta();
+          meta.lastIcloudLoadAt = Date.now();
+          meta.lastIcloudFilename = file.name || meta.lastIcloudFilename;
+          saveMeta(meta);
+
+          showToast("📂 Loaded. Welcome back to the financial reality show.");
+        } catch (err) {
+          showToast("😬 That file isn’t valid. Pick a proper ledger JSON.");
+        }
+      };
+      reader.readAsText(file);
+    };
+
+    input.click();
+  }
+
+  async function enableNotifications(){
+    if (!("Notification" in window)) {
+      showToast("🔕 Notifications not supported here.");
+      return;
+    }
+    try{
+      const perm = await Notification.requestPermission();
+      if (perm === "granted") showToast("🔔 Notifications enabled. Boss Lady is now watching. 👀");
+      else showToast("🔕 Notifications not allowed. Toasts will still work.");
+    }catch{
+      showToast("🔕 Couldn’t request notification permission here.");
+    }
+  }
+
+  function clearMonth(){
+    const wantSave = confirm("Before we wipe the evidence… save this month to iCloud?");
+    if (wantSave) {
+      exportToIcloud();
+      setTimeout(() => {
+        const sure = confirm("Saved it to iCloud Drive? If yes, I’ll clear the month now.");
+        if (sure) {
+          expenses = [];
+          activeTagFilter = "ALL";
+          saveLocal();
+          render();
+          showToast("🧨 Month cleared. Fresh start. Same 60/40. 😄");
+        } else {
+          showToast("⏳ Not cleared. Save it properly, then try again.");
+        }
+      }, 350);
+      return;
+    }
+
+    const really = confirm("Clear anyway WITHOUT saving? (brave move)");
+    if (!really) { showToast("✅ Cancelled. Evidence preserved."); return; }
+
+    expenses = [];
+    activeTagFilter = "ALL";
+    saveLocal();
+    render();
+    showToast("🧼 Cleared. May the receipts forgive you.");
+  }
+
+  function updateSplitCalc(){
+    const a = Number($("splitAmount").value || 0);
+    $("splitZen").textContent = gbp(a * 0.6);
+    $("splitBoss").textContent = gbp(a * 0.4);
+  }
+
+  function shouldPromptLoad(){
+    // Prompt if:
+    // - any local data exists AND
+    // - never loaded from iCloud OR it's been > 12 hours since last load
+    const hasLocal = Array.isArray(expenses) && expenses.length > 0;
+    const meta = loadMeta();
+    const lastLoad = Number(meta.lastIcloudLoadAt || 0);
+    const twelveHours = 12 * 60 * 60 * 1000;
+    return hasLocal && (!lastLoad || (Date.now() - lastLoad) > twelveHours);
+  }
+
+  // Init
+  loadLocal();
+  render();
+
+  $("addBtn").addEventListener("click", addExpense);
+  $("saveBtn").addEventListener("click", exportToIcloud);
+  $("loadBtn").addEventListener("click", importFromIcloud);
+  $("notifBtn").addEventListener("click", enableNotifications);
+  $("clearBtn").addEventListener("click", clearMonth);
+  $("splitAmount").addEventListener("input", updateSplitCalc);
+
+  $("date").value = new Date().toISOString().slice(0,10);
+  updateSplitCalc();
+
+  // Startup prompt to load iCloud JSON for up-to-date entries
+  setTimeout(() => {
+    if (shouldPromptLoad()) {
+      const meta = loadMeta();
+      const hint = meta.lastIcloudFilename ? `\n\nLast file: ${meta.lastIcloudFilename}` : "";
+      const ok = confirm("🔄 Load iCloud JSON to get the up-to-date entries?" + hint);
+      if (ok) importFromIcloud();
+    }
+  }, 450);
+</script>
+
+</body>
+</html>
