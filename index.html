@@ -120,6 +120,20 @@
       0%{ background: rgba(99,102,241,.22); }
       100%{ background: transparent; }
     }
+
+    /* Safer delete button */
+    .delbtn{
+      width:auto;
+      padding: 8px 10px;
+      border-radius: 12px;
+      font-size: 13px;
+      background: rgba(255, 77, 77, .18);
+      color: #ffd1d1;
+      border: 1px solid rgba(255, 77, 77, .30);
+      box-shadow: none;
+    }
+    .delbtn:active{ transform: scale(.97); }
+    .nowrap{ white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -239,7 +253,7 @@
 <!-- Table -->
 <div class="card">
   <div class="big">📒 Expenses <span class="tiny muted" id="filterLabel"></span></div>
-  <div class="tiny muted">Tap a row to delete. Tap a tag pill to filter.</div>
+  <div class="tiny muted">Tap a tag pill to filter. Delete needs a 🗑️ + confirmation (Boss Lady-approved).</div>
 
   <div style="overflow:auto; margin-top:8px;">
     <table>
@@ -252,6 +266,7 @@
           <th>Tag</th>
           <th>60%</th>
           <th>40%</th>
+          <th class="nowrap">Delete</th>
         </tr>
       </thead>
       <tbody id="rows"></tbody>
@@ -263,9 +278,9 @@
 
 <script>
   const STORAGE_KEY = "zen_boss_ledger_v3";
-  const META_KEY = "zen_boss_ledger_meta_v1"; // last iCloud load/save info
+  const META_KEY = "zen_boss_ledger_meta_v1";
   let expenses = [];
-  let activeTagFilter = "ALL"; // ALL | HOUSEHOLD | SAANJH | SEHER | KIDS_BOTH
+  let activeTagFilter = "ALL";
 
   const $ = (id) => document.getElementById(id);
   const gbp = (n) => "£" + (Number(n || 0)).toFixed(2);
@@ -372,8 +387,6 @@
     list.forEach((e) => {
       const idx = expenses.indexOf(e);
       const tr = document.createElement("tr");
-      tr.style.cursor = "pointer";
-      tr.title = "Tap to delete this row";
 
       tr.innerHTML = `
         <td>${e.date || ""}</td>
@@ -383,6 +396,7 @@
         <td>${tagPill(e.tag)}</td>
         <td>${gbp(e.amount * 0.6)}</td>
         <td>${gbp(e.amount * 0.4)}</td>
+        <td class="nowrap"><button class="delbtn" data-del="1" title="Delete this entry">🗑️</button></td>
       `;
 
       tr.addEventListener("click", (ev) => {
@@ -392,10 +406,20 @@
           ev.stopPropagation();
           return;
         }
-        expenses.splice(idx, 1);
-        saveLocal();
-        render();
-        showToast("🧽 Row deleted. Evidence disposed.");
+
+        const del = ev.target.closest && ev.target.closest("[data-del]");
+        if (del) {
+          ev.stopPropagation();
+          const desc = (e.desc && e.desc.trim()) ? e.desc.trim() : "this expense";
+          const ok = confirm(`Delete ${desc} (${gbp(e.amount)})?\n\nThis cannot be undone.`);
+          if (!ok) return;
+
+          expenses.splice(idx, 1);
+          saveLocal();
+          render();
+          showToast("🧾 Deleted. Boss Lady approved.");
+          return;
+        }
       });
 
       tbody.appendChild(tr);
@@ -454,7 +478,7 @@
   function exportToIcloud(){
     const payload = {
       app: "zen-boss-ledger",
-      version: 3,
+      version: 5,
       exportedAt: new Date().toISOString(),
       expenses
     };
@@ -489,9 +513,10 @@
       reader.onload = () => {
         try {
           const parsed = JSON.parse(reader.result);
-          if (!parsed || !Array.isArray(parsed.expenses)) throw new Error("Invalid");
+          const ex = parsed && Array.isArray(parsed.expenses) ? parsed.expenses : null;
+          if (!ex) throw new Error("Invalid");
 
-          expenses = parsed.expenses.map(e => ({
+          expenses = ex.map(e => ({
             date: e.date || "",
             desc: e.desc || "",
             amount: Number(e.amount || 0),
@@ -569,9 +594,6 @@
   }
 
   function shouldPromptLoad(){
-    // Prompt if:
-    // - any local data exists AND
-    // - never loaded from iCloud OR it's been > 12 hours since last load
     const hasLocal = Array.isArray(expenses) && expenses.length > 0;
     const meta = loadMeta();
     const lastLoad = Number(meta.lastIcloudLoadAt || 0);
@@ -593,7 +615,6 @@
   $("date").value = new Date().toISOString().slice(0,10);
   updateSplitCalc();
 
-  // Startup prompt to load iCloud JSON for up-to-date entries
   setTimeout(() => {
     if (shouldPromptLoad()) {
       const meta = loadMeta();
